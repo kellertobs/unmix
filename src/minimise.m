@@ -32,12 +32,13 @@ tol = input(['->  Adjust endmember fitting tolerances as list [Atol,Ftol] \n' ..
              '    Atol: tolerance for negative abundances    (dft = ',num2str(dft(1)),') \n' ...
              '    Ftol: tolerance for negative EM components (dft = ',num2str(dft(2)),') \n']);
 if isempty(tol); tol = dft; end
-Atol = tol(1);
-Ftol = tol(2);
+Atol   = tol(1);
+Ftol   = tol(2);
 
-Fp    = (F - DGN.meanX)/DGN.PC(1:p-1,:);
+Fp     = (F - DGN.meanX)/DGN.PC(1:p-1,:);
 
-[Fp,~] = fmincon(@(Fp)log(smplxvol(Fp)),Fp,[],[],[],[],[],[],@(Fp)nonneg(Fp,A(DGN.Ii,:),Atol,Ftol,DGN));
+opts   = optimoptions('fmincon','Display','iter');
+[Fp,~] = fmincon(@(Fp)log(smplxvol(Fp)),Fp,[],[],[],[],[],[],@(Fp)nonneg(Fp,A(DGN.Ii,:),Atol,Ftol,DGN),opts);
 
 F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FCM space
 
