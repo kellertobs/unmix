@@ -55,20 +55,20 @@ while repeat
     
     % visualise principle components and fitted data for p-EM model
     PCNAMES = cell(1,p); for i=1:p; PCNAMES(i) = {['PC',int2str(i)]}; end
-    visualise(10,{Ap},{'reduced data'},['Reduced data in ',num2str(p),' principle component space;'],DGN,PCNAMES);
+    visualise(DGN.fn,{Ap},{'reduced data'},['Reduced data in ',num2str(p),' principal component space;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
     
     % plot residuals of data projection
-    visualise(20,{(Xp-X)./std(Xp)},{'proj. residuals'},['Data projection residuals for ',num2str(DGN.p),' EMs'],DGN,VNAMES);
+    visualise(DGN.fn,{(Xp-X)./std(Xp)},{'proj. residuals'},['Data projection residuals for ',num2str(DGN.p),' EMs'],DGN,VNAMES); DGN.fn = DGN.fn+1; 
 
     % plot dimensionality selection metrics
-    figure(30); clf;
+    figure(DGN.fn); clf;  DGN.fn = DGN.fn+1; 
     FS = {'FontSize',14}; MS = {'MarkerSize',8}; LW = {'LineWidth',1.5};
     sgtitle(['Selected ',int2str(p),' endmembers for mixing model'],FS{:})
     subplot(1,4,1)
-    plot(2:DGN.n,DGN.CF,'k-',2:DGN.n,DGN.CF,'ko',MS{:},LW{:}); hold on; box on; axis tight;
-    plot(p,DGN.CF(p-1),'ro',MS{:},LW{:});
+    plot(2:DGN.n,DGN.CC,'k-',2:DGN.n,DGN.CC,'ko',MS{:},LW{:}); hold on; box on; axis tight;
+    plot(p,DGN.CC(p-1),'ro',MS{:},LW{:});
     set(gca,LW{:});
-    title('fuzzy clustering',FS{:});
+    title('k-means clustering',FS{:});
     subplot(1,4,2)
     plot(2:DGN.n,DGN.CV,'k-',2:DGN.n,DGN.CV,'ko',MS{:},LW{:}); hold on; box on; axis tight;
     plot(p,DGN.CV(p-1),'ro',MS{:},LW{:});
