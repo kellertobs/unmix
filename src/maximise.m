@@ -29,7 +29,7 @@ p = DGN.p;
 At = [A(DGN.Ii,:),ones(length(DGN.Ii),1)].';
 
 maxV = smplxvol(F);  % initialise volume for maximisation
-for k=1:2*p  % perform VCA 2*p times to ensure max-vol solution is found
+for k=1:3*p  % perform VCA 3 x p times to ensure max-vol solution is found
     
     ind    = zeros(1,p);
     B      = zeros(p,p);
