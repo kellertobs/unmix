@@ -22,9 +22,9 @@
 
 function  [X,DGN] = analyse(X,DGN)
 
-X         =  X./sum(X,2).*100;  % normalise data to 100% sum
+X  =  X./sum(X,2);  % normalise data to unit sum
 
-% store some variable-wise descriptive statistics for sum-normalised data
+% store variable-wise descriptive statistics for sum-normalised data
 DGN.minX  = min(X);
 DGN.maxX  = max(X);
 DGN.meanX = mean(X);
@@ -43,11 +43,11 @@ for p  = 2:DGN.n
     Ap = DGN.PA(:,1:p-1);
     Xp = Ap*Fp + mean(X);
     DGN.CD(:,p-1) = 1 - std(Xp-X).^2./std(X).^2;  % get correlation coefficients of data fit
-    [~,~,f] = fcm(X,p,[2,1e3,1e-6,0]);
-    fp(p-1)   = f(end).^2;
+    [~,~,sumD] = kmeans(X,p);
+    fp(p-1) = mean(sumD).^2;
 end  % end for
-DGN.CF = cumsum(fp./sum(fp));
+DGN.CC = cumsum(fp./sum(fp));
 
-DGN.CS = DGN.CF.*DGN.CV.*mean(DGN.CD).';
+DGN.CS = DGN.CV.*mean(DGN.CD).'.*DGN.CC;
 
 end  % end function
