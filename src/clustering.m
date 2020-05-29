@@ -41,10 +41,10 @@ switch mth(1)
         mth = 'fuzzy-c-means';
 
         % perform fuzzy clustering analysis (requires fuzzy toolbox)
-        [Fcp,Mc]   = fcm(Ap(DGN.Ii,:),DGN.p,[2,1e3,1e-6,0]);  % clustering in RPC
+        [Fcp,Mc]   = fcm(Ap(DGN.Ii,:),DGN.p,[2,1e3,1e-6,1]);  % clustering in RPC
         Ic = zeros(size(DGN.Ii));
         for c = 1:DGN.p
-            Ic(Mc(c,:).'>0.5) = c;
+            Ic(Mc(c,:).'==max(Mc).') = c;
         end
 
     case 'k'
@@ -66,6 +66,8 @@ switch mth(1)
             Fcp(c,:) = mean(Ap(DGN.Ii(Ic==c),:));
         end
         
+    otherwise
+        error('!!! must enter a recognisable clustering option !!!')
 end
 
 Fc = Fcp*DGN.PC(1:DGN.p-1,:) + DGN.meanX;  % transform back to FMC
