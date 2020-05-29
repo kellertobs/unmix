@@ -21,36 +21,73 @@
 % license  : GNU General Public License v3.0
 
 
-function    [fh] = visualise(figno,DATA,LEGEND,TITLE,DGN,VNAME)
+function    [fh] = visualise(figno,DATA,LEGEND,TITLE,DGN,VNAME,varargin)
 
+if isempty(varargin); vstype = 'sct'; else vstype = varargin{1}; end
+if strcmp(vstype,'rgb'); rgb = varargin{2}; end
 FS = {'FontSize',14}; MT = {'.','o','*'}; MS = {'MarkerSize',10};
 LW = {'LineWidth',1.5}; CL = {'Color','k','b','r','g','m','c','y'};
-kk = length(DATA);
-nn = size(DATA{1},2);
-ii = ceil(sqrt(nn-1));
-jj = ceil((nn-1)/ii);
-pp = 1;
+
 fh = figure(figno); clf;
 sgtitle(TITLE,FS{1},FS{2}+2);
-for i = 1:ii
-    for j = 1:jj
-        subplot(ii,jj,pp); box on; hold on;
-        for k = 1:kk
-            if     size(DATA{k},1) == DGN.m % is data array
-                plot(DATA{k}(DGN.Ii,1),DATA{k}(DGN.Ii,pp+1),MT{1},MS{:},CL{1},CL{1+k},LW{:});
-                plot(DATA{k}(DGN.Ir,1),DATA{k}(DGN.Ir,pp+1),MT{2},MS{:},CL{1},CL{1+k},LW{:});
-                if ~isempty(DGN.Ir); LEGEND = {LEGEND{1:2*k-1},[LEGEND{2*k-1},' rmvd'],LEGEND{2*k:end}}; end
-            elseif size(DATA{k},1) > DGN.p % is other array
-                plot(DATA{k}(:,1),DATA{k}(:,pp+1),MT{1},MS{:},CL{1},CL{1+k},LW{:});
-            else % is EM array
-                plot(DATA{k}(:,1),DATA{k}(:,pp+1),MT{3},MS{:},CL{1},CL{1+k},LW{:});
-            end
+
+if strcmp(vstype,'rgb')  % 2D RGB image
+    dft = [1,2,3];
+    rgb = input('How would you like to assign bands to RGB channels? (default [1,2,3]):');
+    if isempty(rgb); rgb = dft; end
+    nn = size(rgb,1);
+    ii = ceil(sqrt(nn));
+    jj = ceil((nn)/ii);
+    pp = 1;
+    if size(DATA{1},1) < DGN.mx*DGN.my
+        DATA{1}(DGN.Ii,pp) = DATA{1}(:,pp);
+        DATA{1}(DGN.Ir,pp) = nan;
+    end
+    for i = 1:ii
+        for j = 1:jj
+            subplot(ii,jj,pp); box on;
+            RGB = DATA{1}(:,rgb(pp,:));
+            RGB = (RGB - (mean(RGB)-2*std(RGB))) ./ ((mean(RGB)+2*std(RGB)) - (mean(RGB)-2*std(RGB)));
+            imagesc(reshape(RGB,DGN.mx,DGN.my,[])); axis equal tight; hold on;
+            pp = pp+1;
+            if (pp>nn); break; end
         end
-        if pp==1; legend(LEGEND{:},FS{:},LW{:},'Location','northoutside','box','on'); end
-        xlabel(VNAME{1},FS{:}); ylabel(VNAME{pp+1},FS{:});
-        set(gca,LW{:});
-        pp = pp+1;
-        if (pp>nn-1); break; end
+    end
+    
+else
+    kk = length(DATA);
+    nn = size(DATA{1},2);
+    ii = ceil(sqrt(nn));
+    jj = ceil((nn)/ii);
+    pp = 1;
+    for i = 1:ii
+        for j = 1:jj
+            subplot(ii,jj,pp); box on;
+            if strcmp(vstype,'img')  % 2D image
+                if size(DATA{1},1) < DGN.mx*DGN.my
+                    DATA{1}(DGN.Ii,pp) = DATA{1}(:,pp);
+                    DATA{1}(DGN.Ir,pp) = nan;
+                end
+                imagesc(reshape(DATA{1}(:,pp),DGN.mx,DGN.my,[])); axis equal tight; colorbar; hold on;
+            else  % scatter plot
+                for k = 1:kk
+                    if     size(DATA{k},1) == DGN.m % is data array
+                        plot(DATA{k}(DGN.Ii,1),DATA{k}(DGN.Ii,pp),MT{1},MS{:},CL{1},CL{1+k},LW{:}); hold on;
+                        plot(DATA{k}(DGN.Ir,1),DATA{k}(DGN.Ir,pp),MT{2},MS{:},CL{1},CL{1+k},LW{:});
+                        if ~isempty(DGN.Ir) && all(~isnan(DATA{k}(:))); LEGEND = {LEGEND{1:2*k-1},[LEGEND{2*k-1},' rmvd'],LEGEND{2*k:end}}; end
+                    elseif size(DATA{k},1) > DGN.p % is reduced data array
+                        plot(DATA{k}(:,1),DATA{k}(:,pp),MT{1},MS{:},CL{1},CL{1+k},LW{:}); hold on;
+                    else % is EM array
+                        plot(DATA{k}(:,1),DATA{k}(:,pp),MT{3},MS{:},CL{1},CL{1+k},LW{:});
+                    end
+                end
+                if pp==1; legend(LEGEND{:},FS{:},LW{:},'Location','northoutside','box','on'); end
+                xlabel(VNAME{1},FS{:}); ylabel(VNAME{pp},FS{:});
+                set(gca,LW{:});
+            end
+            pp = pp+1;
+            if (pp>nn); break; end
+        end
     end
 end
 drawnow
