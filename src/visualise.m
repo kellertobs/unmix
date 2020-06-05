@@ -24,7 +24,6 @@
 function    [fh] = visualise(figno,DATA,LEGEND,TITLE,DGN,VNAME,varargin)
 
 if isempty(varargin); vstype = 'sct'; else vstype = varargin{1}; end
-if strcmp(vstype,'rgb'); rgb = varargin{2}; end
 FS = {'FontSize',14}; MT = {'.','o','*'}; MS = {'MarkerSize',10};
 LW = {'LineWidth',1.5}; CL = {'Color','k','b','r','g','m','c','y'};
 

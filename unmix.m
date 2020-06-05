@@ -62,6 +62,7 @@
 
 %% *****  PREP WORKSPACE  *************************************************
 clear variables;       % clear workspace
+close all;             % close figures
 warning('off','all');  % turn off warning
 addpath ./src ./data   % add paths to source code and data directories
 
@@ -83,21 +84,56 @@ if strcmp(file(end-3:end),'.csv') || ...  % load data from text file
     VNAMES = DATA.Properties.VariableNames(2:end);
     SNAMES = DATA{:    ,1};
     X      = DATA{:,2:end};
+    if any(sum(X,2) > 2)  % detect that chemical data is in wt %, convert to wt fraction
+        X = X./100;
+        if exist('Ft','var'); Ft = Ft./100; end
+        if exist('Xt','var'); Ft = Ft./100; end
+    end
+    vstype = 'sct';  % scatter plots
+elseif strcmp(file(end-3:end),'.tif') || ...  % load image data from tiff file
+       strcmp(file(end-3:end),'tiff')
+    T   = Tiff(file,'r');
+    IMG = read(T);
+    if any(size(IMG(:)) > 1e5)  % coarsen image to avoid working with oversized data
+        dft = 1;
+        crs = input(['This image has dimensions of ',int2str(size(IMG)),'; apply coarsening factor (coarsen>1, dft=1):\n']);
+        if isempty(crs); crs = dft; end
+        IMG = IMG(1:crs:end,1:crs:end,:);
+    end
+    [DGN.mx,DGN.my,n] = size(IMG);
+    m   = DGN.mx*DGN.my;
+    X   = reshape(IMG,m,size(IMG,3));
+    X   = double(X);
+    VNAMES = cell(1,n); for i=1:n; VNAMES(i) = {['BND_',int2str(i)]}; end
+    SNAMES = {};
+    vstype = 'img';  % image plots
 else % assume data is provided as Matlab file
     load(file);
+    if any(sum(X,2) > 2)  % detect that chemical data is in wt %, convert to wt fraction
+        X = X./100;
+        if exist('Ft','var'); Ft = Ft./100; end
+        if exist('Xt','var'); Xt = Xt./100; end
+    end
+    vstype = 'sct';  % scatter plots
 end
+if ~exist('PRJCT','var'); PRJCT = file; end
+X0 = X;  % store original, unprocessed data
 
 % store number of samples and variables in diagnostics structure
 [m,n]  = size(X);
 DGN.m  = m; DGN.n = n; DGN.p = n-1;
 DGN.Ii = (1:m).';
 DGN.Ir = [];
+DGN.fn = 1;
 
 % plot unprocessed data
 if exist('Ft','var')  % if true EM known
-    f1 = visualise(1,{X,Xt,Ft},{'true data','noisy data','true EMs'},'Unprocessed Data',DGN,VNAMES);
+    f1 = visualise(DGN.fn,{X,Xt,Ft},{'true data','noisy data','true EMs'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
 else
-    f1 = visualise(1,{X},{'data'},'Unprocessed Data',DGN,VNAMES);
+    f1 = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
+    if strcmp(vstype,'img')
+        f1 = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
+    end
 end
 pause
 
@@ -137,7 +173,7 @@ pause
 % based on VCA algorithm by [REF]
 [Fi,Fip,Ai,DGN] = maximise(Ap,Fcp,DGN);
 
-f3 = visualise(3,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES);
+f3 = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
 pause
 
 
@@ -147,7 +183,7 @@ pause
 % based on the MINVEST algorithm by [REF]
 [Fe,Fep,Ae,DGN] = minimise(Ap,Fi,DGN);
 
-f4 = visualise(4,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES);
+f4 = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
 pause
 
 
@@ -155,15 +191,21 @@ pause
 
 % report final data fit and EM compositions
 if exist('Ft','var')  % if true EM known
-    f5 = visualise(5,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);
-    f6 = visualise(6,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);
-    f7 = visualise(7,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);
+    f5 = visualise(DGN.fn,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    f6 = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    f7 = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
 else
-    f5 = visualise(5,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);
-    f6 = visualise(6,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);
-    f7 = visualise(7,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);
+    f5 = visualise(DGN.fn,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    f6 = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1;
+    f7 = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
 end
 
+if strcmp(vstype,'img')
+    f8  = visualise(DGN.fn,{Ic},{},['Map of ',num2str(DGN.p),' clusters;'],DGN,VNAMES,'img');  DGN.fn = DGN.fn+1; 
+    f9  = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
+    f10 = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
+end
+    
 DGN.CD = 1 - std(Xp-X).^2./std(X).^2;
 [~,i]  = sort(Fe(:,1));
 disp(' ');
