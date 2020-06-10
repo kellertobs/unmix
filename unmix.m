@@ -60,14 +60,19 @@
 % created  : 2020-05-05  Tobias Keller, University of Glasgow
 % license  : GNU General Public License v3.0
 
+
 %% *****  PREP WORKSPACE  *************************************************
 clear variables;       % clear workspace
 close all;             % close figures
 warning('off','all');  % turn off warning
 addpath ./src ./data   % add paths to source code and data directories
 
+fprintf(1,'\n\n*****  UNMIX - TOOL FOR GEOCHEMICAL AND MULTISPECTRAL DATA ANALYSIS \n\n')
+
 
 %% *****  LOAD DATA  ******************************************************
+
+fprintf(1,'\n*****  LOAD DATA \n\n')
 
 % set data file to read
 dft  = 'DATA';
@@ -96,7 +101,7 @@ elseif strcmp(file(end-3:end),'.tif') || ...  % load image data from tiff file
     IMG = read(T);
     if any(size(IMG(:)) > 1e5)  % coarsen image to avoid working with oversized data
         dft = 1;
-        crs = input(['This image has dimensions of ',int2str(size(IMG)),'; apply coarsening factor (coarsen>1, dft=1):\n']);
+        crs = input(['\nImage has dimensions of ',int2str(size(IMG,1)),' x ',int2str(size(IMG,2)),' x ' ,int2str(size(IMG,3)),'; apply coarsening factor (coarsen>1, dft=1):\n']);
         if isempty(crs); crs = dft; end
         IMG = IMG(1:crs:end,1:crs:end,:);
     end
@@ -104,7 +109,7 @@ elseif strcmp(file(end-3:end),'.tif') || ...  % load image data from tiff file
     m   = DGN.mx*DGN.my;
     X   = reshape(IMG,m,size(IMG,3));
     X   = double(X);
-    VNAMES = cell(1,n); for i=1:n; VNAMES(i) = {['BND_',int2str(i)]}; end
+    VNAMES = cell(1,n); for i=1:n; VNAMES(i) = {['BND ',int2str(i)]}; end
     SNAMES = {};
     vstype = 'img';  % image plots
 else % assume data is provided as Matlab file
@@ -116,7 +121,7 @@ else % assume data is provided as Matlab file
     end
     vstype = 'sct';  % scatter plots
 end
-if ~exist('PRJCT','var'); PRJCT = file; end
+if ~exist('PRJCT','var'); filesplt = split(file,'.'); PRJCT = filesplt{1}; end
 X0 = X;  % store original, unprocessed data
 
 % store number of samples and variables in diagnostics structure
@@ -128,82 +133,104 @@ DGN.fn = 1;
 
 % plot unprocessed data
 if exist('Ft','var')  % if true EM known
-    f1 = visualise(DGN.fn,{X,Xt,Ft},{'true data','noisy data','true EMs'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xt,Ft},{'true data','noisy data','true EMs'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
 else
-    f1 = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
     if strcmp(vstype,'img')
-        f1 = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
+        DGN.fh(DGN.fn) = visualise(DGN.fn,{X},{'data'},'Unprocessed Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
     end
 end
-pause
 
 
 %% *****  REDUCE DIMENSIONALITY  ******************************************
 
+fprintf(1,'\n*****  ANALYSE DATA \n\n')
+
 [X,DGN]     = analyse(X,DGN);       % perform principal component analysis
+
+fprintf(1,'\n*****  REDUCE DATA DIMENSIONS \n\n')
 
 [Xp,Ap,DGN] = reduce(X,DGN,VNAMES); % reduce data dimensionality
 
-
-%% *****  CLUSTERING ANALYSIS  ********************************************
-
-[Ic,Fc,Fcp,DGN] = clustering(Ap,DGN);
-
-% prepare cluster visualisation according to membership
-DATA = cell(1,DGN.p+1);
-DATX = cell(1,DGN.p+1);
-LGND = cell(1,DGN.p+1);
-for c = 1:DGN.p
-    DATA(c) = {Ap(DGN.Ii(Ic==c),:)};
-    DATX(c) = {Xp(DGN.Ii(Ic==c),:)};
-    LGND(c) = {['cluster ',int2str(c)]};
-end
-DATA(end) = {Fcp};
-DATX(end) = {Fc};
-LGND(end) = {'cluster centroids'};
-PCNAMES = cell(1,DGN.p); for i=1:DGN.p; PCNAMES(i) = {['PC',int2str(i)]}; end
-
-f2 = visualise(2,DATA,LGND,['Fitted data with ',num2str(DGN.p),' cluster centroids;'],DGN,PCNAMES);
-pause
+PCNAMES     = cell(1,DGN.p); for i=1:DGN.p; PCNAMES(i) = {['PC ',int2str(i)]}; end % create labels for principal components
 
 
 %% *****  MAXIMISE INTERNAL SIMPLEX  **************************************
 
+fprintf(1,'\n*****  FIND INTERNAL END-MEMBERS \n\n')
+
 % find internal EMs that span maximum inclusive volume in RPC space
 % based on VCA algorithm by [REF]
-[Fi,Fip,Ai,DGN] = maximise(Ap,Fcp,DGN);
+[Fi,Fip,Ai,DGN] = maximise(Ap,DGN);
 
-f3 = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
-pause
+DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
 
 
 %% *****  MINIMISE EXTERNAL SIMPLEX  **************************************
+
+fprintf(1,'\n*****  FIND EXTERNAL END-MEMBERS \n\n')
 
 % find external EMs that span minimum exclusive volume in RPC space
 % based on the MINVEST algorithm by [REF]
 [Fe,Fep,Ae,DGN] = minimise(Ap,Fi,DGN);
 
-f4 = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
-pause
+DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
+
+
+%% *****  CLUSTERING ANALYSIS  ********************************************
+
+fprintf(1,'\n*****  ANALYSE CLUSTERING \n\n')
+
+% select data representation for clustering analysis
+dft = 'PC';
+cdt = input(['->  Select data representation to run clustering analysis on: \n' ...
+             '    data in principal component space: PC (dft) \n' ...
+             '    data in internal end-member space: IM \n' ...
+             '    data in external end-member space: EM \n'],'s');
+if isempty(cdt); cdt = dft; end
+DGN.cluster_data = cdt;
+
+switch cdt
+    case 'PC'
+        Ac = Ap;
+    case 'IM'
+        Ac = Ai;
+    case 'EM'
+        Ac = Ae;
+end
+[Ic,Fc,DGN] = clustering(Ac,DGN);
+
+% prepare cluster visualisation according to membership
+DATA = cell(1,DGN.p+1);
+LGND = cell(1,DGN.p+1);
+for c = 1:DGN.p
+    DATA(c) = {Ac(DGN.Ii(Ic==c),:)};
+    LGND(c) = {['cluster ',int2str(c)]};
+end
+DATA(end) = {Fc};
+LGND(end) = {'cluster centroids'};
+CCNAMES   = cell(1,DGN.p); for i=1:DGN.p; CCNAMES(i) = {['CC ',int2str(i)]}; end % create labels for principal components
+
+DGN.fh(DGN.fn) = visualise(DGN.fn,DATA,LGND,['Fitted data with ',num2str(DGN.c),' cluster centroids;'],DGN,CCNAMES); DGN.fn = DGN.fn+1;
 
 
 %% *****  REPORT RESULTS  *************************************************
 
+fprintf(1,'\n*****  EXAMINE OUTPUT \n\n')
+
 % report final data fit and EM compositions
 if exist('Ft','var')  % if true EM known
-    f5 = visualise(DGN.fn,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-    f6 = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-    f7 = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
 else
-    f5 = visualise(DGN.fn,DATX,LGND,['Fitted model with ',num2str(DGN.p),' clusters;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-    f6 = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1;
-    f7 = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1;
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
 end
 
 if strcmp(vstype,'img')
-    f8  = visualise(DGN.fn,{Ic},{},['Map of ',num2str(DGN.p),' clusters;'],DGN,VNAMES,'img');  DGN.fn = DGN.fn+1; 
-    f9  = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
-    f10 = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ic},{},['Map of ',num2str(DGN.c),' clusters;'],DGN,VNAMES,'img');  DGN.fn = DGN.fn+1;
 end
     
 DGN.CD = 1 - std(Xp-X).^2./std(X).^2;
@@ -236,3 +263,20 @@ for nn=1:DGN.n
     fprintf(1,'\n'); 
 end
 disp(' ');
+
+% select data representation for clustering analysis
+dft = 0;
+sdf = input('\n->  Do you wish to save data and figures? yes=1, no=0 (dft) \n');
+if isempty(sdf); sdf = dft; end
+
+if sdf
+    sdfpath = ['./out/',PRJCT,'_',datestr(datetime('now')),'/'];
+    if ~exist(sdfpath,'dir'); mkdir(sdfpath); end
+    save([sdfpath,'out'],'DGN','X','Xp','Ap','Fi','Fip','Ai','Fe','Fep','Ae','Fc','Ic');
+    for fn = 1:length(DGN.fh)
+        if ishandle(DGN.fh(fn))
+            set(DGN.fh(fn),'PaperSize',[18 15]);
+            print(DGN.fh(fn),[sdfpath,'fig_',int2str(fn)],'-dpdf','-r300','-loose');
+        end
+    end
+end

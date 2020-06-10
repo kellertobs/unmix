@@ -27,7 +27,7 @@
 function  [Xp,Ap,DGN] = reduce(X,DGN,VNAMES)
 
 % set tolerances for EM selections
-dft = [0.6,2.0];
+dft = [0.75,5.0];
 tol = input(['->  Adjust endmember selection tolerances as list [CStol,ORtol] \n' ...
              '    CStol: tolerance for selection coefficients (dft = ',num2str(dft(1)),') \n' ...
              '    ORtol: tolerance for outlier data removal   (dft = ',num2str(dft(2)),') \n' ]);
@@ -55,13 +55,13 @@ while repeat
     
     % visualise principle components and fitted data for p-EM model
     PCNAMES = cell(1,p); for i=1:p; PCNAMES(i) = {['PC',int2str(i)]}; end
-    visualise(DGN.fn,{Ap},{'reduced data'},['Reduced data in ',num2str(p),' principal component space;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap},{'reduced data'},['Reduced data in ',num2str(p),' principal component space;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
     
     % plot residuals of data projection
-    visualise(DGN.fn,{(Xp-X)./std(Xp)},{'proj. residuals'},['Data projection residuals for ',num2str(DGN.p),' EMs'],DGN,VNAMES); DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{(Xp-X)./std(Xp)},{'proj. residuals'},['Data projection residuals for ',num2str(DGN.p),' EMs'],DGN,VNAMES); DGN.fn = DGN.fn+1; 
 
     % plot dimensionality selection metrics
-    figure(DGN.fn); clf;  DGN.fn = DGN.fn+1; 
+    DGN.fh(DGN.fn) = figure(DGN.fn); clf;  DGN.fn = DGN.fn+1; 
     FS = {'FontSize',14}; MS = {'MarkerSize',8}; LW = {'LineWidth',1.5};
     sgtitle(['Selected ',int2str(p),' endmembers for mixing model'],FS{:})
     subplot(1,4,1)
@@ -85,11 +85,10 @@ while repeat
     plot(p,DGN.CS(p-1),'ro',MS{:},LW{:});
     set(gca,LW{:});
     title('selection',FS{:})
-    pause
     
     % decide to procede with selected model or change selection
     dft  = 1;
-    prcd = input(['->  Proceed with ',num2str(p),'-EM model (1, dft) or adjust number of EM (>1)? \n']);
+    prcd = input(['\n->  Proceed with ',num2str(p),'-EM model (1, dft) or adjust number of EM (>1)? \n']);
     if isempty(prcd); prcd = dft; end
     
     if  prcd>1;  p = prcd;   end

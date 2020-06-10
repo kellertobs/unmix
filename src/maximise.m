@@ -21,14 +21,14 @@
 % license  : GNU General Public License v3.0
 
 
-function [F,Fp,A,DGN] = maximise(A,F,DGN)
+function [F,Fp,A,DGN] = maximise(A,DGN)
 
 p = DGN.p;
 
 % create testing array for extracting extreme samples
 At = [A(DGN.Ii,:),ones(length(DGN.Ii),1)].';
 
-maxV = smplxvol(F);  % initialise volume for maximisation
+maxV = 1e-16;  % initialise volume for maximisation
 for k=1:3*p  % perform VCA 3 x p times to ensure max-vol solution is found
     
     ind    = zeros(1,p);
@@ -54,9 +54,9 @@ for k=1:3*p  % perform VCA 3 x p times to ensure max-vol solution is found
 end
 
 Fp = A(maxi,:);  % extract max-vol. internal EMs in RPC space
-F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FCM space
+F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FMC space
 
-A  = [A,ones(size(A,1),1)]/[Fp,ones(size(Fp,1),1)];  % get mixing abundances in FCM space
+A  = [A,ones(size(A,1),1)]/[Fp,ones(size(Fp,1),1)];  % get mixing abundances in FMC space
 
 DGN.maxV = maxV; % get maximised data-inclusive simplex volume
 DGN.maxi = maxi; % get indices for mutually extreme samples

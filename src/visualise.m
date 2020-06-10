@@ -23,16 +23,15 @@
 
 function    [fh] = visualise(figno,DATA,LEGEND,TITLE,DGN,VNAME,varargin)
 
-if isempty(varargin); vstype = 'sct'; else vstype = varargin{1}; end
+if isempty(varargin); vstype = 'sct'; else; vstype = varargin{1}; end
 FS = {'FontSize',14}; MT = {'.','o','*'}; MS = {'MarkerSize',10};
 LW = {'LineWidth',1.5}; CL = {'Color','k','b','r','g','m','c','y'};
 
 fh = figure(figno); clf;
-sgtitle(TITLE,FS{1},FS{2}+2);
 
 if strcmp(vstype,'rgb')  % 2D RGB image
     dft = [1,2,3];
-    rgb = input('How would you like to assign bands to RGB channels? (default [1,2,3]):');
+    rgb = input('\nHow would you like to assign bands to RGB channels? (default [1,2,3]):\n');
     if isempty(rgb); rgb = dft; end
     nn = size(rgb,1);
     ii = ceil(sqrt(nn));
@@ -46,8 +45,9 @@ if strcmp(vstype,'rgb')  % 2D RGB image
         for j = 1:jj
             subplot(ii,jj,pp); box on;
             RGB = DATA{1}(:,rgb(pp,:));
-            RGB = (RGB - (mean(RGB)-2*std(RGB))) ./ ((mean(RGB)+2*std(RGB)) - (mean(RGB)-2*std(RGB)));
+            RGB = (RGB - (mean(RGB)-3*std(RGB))) ./ ((mean(RGB)+3*std(RGB)) - (mean(RGB)-3*std(RGB)));
             imagesc(reshape(RGB,DGN.mx,DGN.my,[])); axis equal tight; hold on;
+            title(['RGB: ',int2str(rgb(pp,:))]);
             pp = pp+1;
             if (pp>nn); break; end
         end
@@ -68,6 +68,7 @@ else
                     DATA{1}(DGN.Ir,pp) = nan;
                 end
                 imagesc(reshape(DATA{1}(:,pp),DGN.mx,DGN.my,[])); axis equal tight; colorbar; hold on;
+                title(VNAME{pp},FS{:});
             else  % scatter plot
                 for k = 1:kk
                     if     size(DATA{k},1) == DGN.m % is data array
@@ -89,6 +90,7 @@ else
         end
     end
 end
+sgtitle(TITLE,FS{1},FS{2}+2);
 drawnow
 
 end  % end function
