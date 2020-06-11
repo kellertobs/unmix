@@ -28,6 +28,7 @@ FS = {'FontSize',14}; MT = {'.','o','*'}; MS = {'MarkerSize',10};
 LW = {'LineWidth',1.5}; CL = {'Color','k','b','r','g','m','c','y'};
 
 fh = figure(figno); clf;
+if strcmp(vstype,'img'); load('ocean.mat','ocean'); end
 
 if strcmp(vstype,'rgb')  % 2D RGB image
     dft = [1,2,3];
@@ -67,7 +68,7 @@ else
                     DATA{1}(DGN.Ii,pp) = DATA{1}(:,pp);
                     DATA{1}(DGN.Ir,pp) = nan;
                 end
-                imagesc(reshape(DATA{1}(:,pp),DGN.mx,DGN.my,[])); axis equal tight; colorbar; hold on;
+                imagesc(reshape(DATA{1}(:,pp),DGN.mx,DGN.my,[])); axis equal tight; colormap(ocean); colorbar; hold on;
                 title(VNAME{pp},FS{:});
             else  % scatter plot
                 for k = 1:kk
