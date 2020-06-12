@@ -1,2 +1,2 @@
 # unmix
-UNMIX – clustering and end-member analysis of geochemical data
+UNMIX – principal component, mixing end-member, and clustering analysis for geochemical and multispectral data sets
