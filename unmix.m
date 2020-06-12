@@ -201,9 +201,9 @@ end
 [Ic,Fc,DGN] = clustering(Ac,DGN);
 
 % prepare cluster visualisation according to membership
-DATA = cell(1,DGN.p+1);
-LGND = cell(1,DGN.p+1);
-for c = 1:DGN.p
+DATA = cell(1,DGN.c+1);
+LGND = cell(1,DGN.c+1);
+for c = 1:DGN.c
     DATA(c) = {Ac(DGN.Ii(Ic==c),:)};
     LGND(c) = {['cluster ',int2str(c)]};
 end
