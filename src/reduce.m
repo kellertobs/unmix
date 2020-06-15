@@ -27,7 +27,7 @@
 function  [Xp,Ap,DGN] = reduce(X,DGN,VNAMES)
 
 % set tolerances for EM selections
-dft = [0.75,5.0];
+dft = [0.7,3.0];
 tol = input(['->  Adjust endmember selection tolerances as list [CStol,ORtol] \n' ...
              '    CStol: tolerance for selection coefficients (dft = ',num2str(dft(1)),') \n' ...
              '    ORtol: tolerance for outlier data removal   (dft = ',num2str(dft(2)),') \n' ]);
