@@ -21,6 +21,7 @@
 
 function V = smplxvol(F)
 
+F = [F,ones(size(F,1),1)];
 V = sqrt(abs(det(F.'*F)));
 
 end  % end function
