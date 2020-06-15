@@ -13,7 +13,7 @@
 
 % set parameters for generating data
 m = 80;   % number of samples
-n = 10;   % number of variables
+n = 9;   % number of variables
 p = 3;    % number of endmembers
 a = 1;    % amplitude of added noise [wt %]
 
@@ -43,7 +43,7 @@ PRJCT = ['Data generated ',datestr(now)];
 PRJCT(PRJCT==' ' | PRJCT=='-') = '_';
 
 DGN.m = m; DGN.n = n; DGN.p = p;
-visualise({Xt,X,Ft},{'true data','noisy data','true EMs'},['Synthetic data for ',num2str(p),' EMs'],DGN,VNAMES)
+visualise(1,{Xt,X,Ft},{'true data','noisy data','true EMs'},['Synthetic data for ',num2str(p),' EMs'],DGN,VNAMES);
         
 save('data/DATA.mat','X','Xt','At','Ft','SNAMES','VNAMES','PRJCT');
 

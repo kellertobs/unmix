@@ -275,8 +275,9 @@ if sdf
     save([sdfpath,'out'],'DGN','X','Xp','Ap','Fi','Fip','Ai','Fe','Fep','Ae','Fc','Ic');
     for fn = 1:length(DGN.fh)
         if ishandle(DGN.fh(fn))
-            set(DGN.fh(fn),'PaperSize',[18 15]);
+            set(DGN.fh(fn),'PaperSize',[24 18]);
             print(DGN.fh(fn),[sdfpath,'fig_',int2str(fn)],'-dpdf','-r300','-loose');
+            savefig(DGN.fh(fn),[sdfpath,'fig_',int2str(fn)]);
         end
     end
 end
