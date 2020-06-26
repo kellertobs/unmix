@@ -40,9 +40,9 @@ Fp     = (F - DGN.meanX)/DGN.PC(1:p-1,:);
 opts   = optimoptions('fmincon','Display','iter');
 [Fp,~] = fmincon(@(Fp)log(smplxvol(Fp)),Fp,[],[],[],[],[],[],@(Fp)nonneg(Fp,A(DGN.Ii,:),Atol,Ftol,DGN),opts);
 
-F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FCM space
+F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FMC space
 
-A  = [A,ones(size(A,1),1)]/[Fp,ones(size(Fp,1),1)];  % get mixing abundances in FCM space
+A  = [A,ones(size(A,1),1)]/[Fp,ones(size(Fp,1),1)];  % get mixing abundances in FMC space
 
 DGN.minV = smplxvol(Fp);  % get minimised data-exclusive simplex volume
 

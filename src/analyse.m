@@ -43,11 +43,12 @@ for p  = 2:DGN.n
     Ap = DGN.PA(:,1:p-1);
     Xp = Ap*Fp + mean(X);
     DGN.CD(:,p-1) = 1 - std(Xp-X).^2./std(X).^2;  % get correlation coefficients of data fit
-    [~,~,sumD] = kmeans(X,p);
-    fp(p-1) = mean(sumD).^2;
+    [~,~,sumD]    = kmeans(X,p);
+    fp(p-1)       = mean(sumD).^2;
 end  % end for
 DGN.CC = cumsum(fp./sum(fp));
 
 DGN.CS = DGN.CV.*mean(DGN.CD).'.*DGN.CC;
+
 
 end  % end function

@@ -154,6 +154,16 @@ fprintf(1,'\n*****  REDUCE DATA DIMENSIONS \n\n')
 
 PCNAMES     = cell(1,DGN.p); for i=1:DGN.p; PCNAMES(i) = {['PC ',int2str(i)]}; end % create labels for principal components
 
+% plot reduced data
+if exist('Ft','var')  % if true EM known
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp,Xt,Ft},{'true data','reduced data','true EMs'},'Reduced Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
+else
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp},{'data'},'reduced Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
+    if strcmp(vstype,'img')
+        DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp},{'data'},'reduced Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
+    end
+end
+
 
 %% *****  MAXIMISE INTERNAL SIMPLEX  **************************************
 
