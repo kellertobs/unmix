@@ -54,7 +54,7 @@ for k=1:3*p  % perform VCA 3 x p times to ensure max-vol solution is found
 end
 
 Fp = A(maxi,:);  % extract max-vol. internal EMs in RPC space
-F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get min-vol. external EMs in FMC space
+F  = Fp*DGN.PC(1:p-1,:) + DGN.meanX;  % get max-vol. internal EMs in FMC space
 
 A  = [A,ones(size(A,1),1)]/[Fp,ones(size(Fp,1),1)];  % get mixing abundances in FMC space
 

@@ -72,7 +72,7 @@ fprintf(1,'\n\n*****  UNMIX - TOOL FOR GEOCHEMICAL AND MULTISPECTRAL DATA ANALYS
 
 %% *****  LOAD DATA  ******************************************************
 
-fprintf(1,'\n*****  LOAD DATA \n\n')
+fprintf(1,'\n*****  LOAD TRAINING DATA \n\n')
 
 % set data file to read
 dft  = 'DATA';
@@ -150,7 +150,7 @@ fprintf(1,'\n*****  ANALYSE DATA \n\n')
 
 fprintf(1,'\n*****  REDUCE DATA DIMENSIONS \n\n')
 
-[Xp,Ap,DGN] = reduce(X,DGN,VNAMES); % reduce data dimensionality
+[Xp,Fp,Ap,DGN] = reduce(X,DGN,VNAMES); % reduce data dimensionality
 
 PCNAMES     = cell(1,DGN.p); for i=1:DGN.p; PCNAMES(i) = {['PC ',int2str(i)]}; end % create labels for principal components
 
@@ -160,7 +160,7 @@ if exist('Ft','var')  % if true EM known
 else
     DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp},{'data'},'reduced Data',DGN,VNAMES,vstype); DGN.fn = DGN.fn+1; 
     if strcmp(vstype,'img')
-        DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp},{'data'},'reduced Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
+        DGN.fh(DGN.fn) = visualise(DGN.fn,{Xp},{'data'},'Reduced Data',DGN,VNAMES,'rgb'); DGN.fn = DGN.fn+1; 
     end
 end
 
@@ -169,84 +169,119 @@ end
 
 fprintf(1,'\n*****  FIND INTERNAL END-MEMBERS \n\n')
 
-% find internal EMs that span maximum inclusive volume in RPC space
-% based on VCA algorithm by [REF]
-[Fi,Fip,Ai,DGN] = maximise(Ap,DGN);
+dft = 0;
+iem = input('\n->  Do you wish to find internal end-members? yes=1, no=0 (dft) \n');
+if isempty(iem); iem = dft; end
 
-DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
+if iem
+    % find internal EMs that span maximum inclusive volume in RPC space
+    % based on VCA algorithm by [REF]
+    [Fi,Fip,Ai,DGN] = maximise(Ap,DGN);
+    
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+end
 
 
 %% *****  MINIMISE EXTERNAL SIMPLEX  **************************************
 
 fprintf(1,'\n*****  FIND EXTERNAL END-MEMBERS \n\n')
 
-% find external EMs that span minimum exclusive volume in RPC space
-% based on the MINVEST algorithm by [REF]
-[Fe,Fep,Ae,DGN] = minimise(Ap,Fi,DGN);
+dft = 0;
+eem = input('\n->  Do you wish to find external end-members? yes=1, no=0 (dft) \n');
+if isempty(eem); eem = dft; end
 
-DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1; 
+if eem
+    % find external EMs that span minimum exclusive volume in RPC space
+    % based on the MINVEST algorithm by [REF]
+    [Fe,Fep,Ae,DGN] = minimise(Ap,Fi,DGN);
+    
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+end
+
+
+%% *****  EXAMINE RESULTS  ************************************************
+
+fprintf(1,'\n*****  EXAMINE OUTPUT \n\n')
+
+% report final data fit and EM compositions
+if exist('Ft','var')  % if true EM known
+    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+else
+    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+end
+
+if strcmp(vstype,'img')
+    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
+    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
+end
 
 
 %% *****  CLUSTERING ANALYSIS  ********************************************
 
 fprintf(1,'\n*****  ANALYSE CLUSTERING \n\n')
 
-% select data representation for clustering analysis
-dft = 'PC';
-cdt = input(['->  Select data representation to run clustering analysis on: \n' ...
-             '    data in principal component space: PC (dft) \n' ...
-             '    data in internal end-member space: IM \n' ...
-             '    data in external end-member space: EM \n'],'s');
-if isempty(cdt); cdt = dft; end
-DGN.cluster_data = cdt;
+dft = 0;
+clu = input('\n->  Do you wish to perform clustering analysis? yes=1, no=0 (dft) \n');
+if isempty(clu); clu = dft; end
 
-switch cdt
-    case 'PC'
-        Ac = Ap;
-    case 'IM'
-        Ac = Ai;
-    case 'EM'
-        Ac = Ae;
-end
-[Ic,Fc,DGN] = clustering(Ac,DGN);
-
-% prepare cluster visualisation according to membership
-DATA = cell(1,DGN.c+1);
-LGND = cell(1,DGN.c+1);
-for c = 1:DGN.c
-    DATA(c) = {Ac(DGN.Ii(Ic==c),:)};
-    LGND(c) = {['cluster ',int2str(c)]};
-end
-DATA(end) = {Fc};
-LGND(end) = {'cluster centroids'};
-CCNAMES   = cell(1,DGN.p); for i=1:DGN.p; CCNAMES(i) = {['CC ',int2str(i)]}; end % create labels for principal components
-
-DGN.fh(DGN.fn) = visualise(DGN.fn,DATA,LGND,['Fitted data with ',num2str(DGN.c),' cluster centroids;'],DGN,CCNAMES); DGN.fn = DGN.fn+1;
-
-
-%% *****  REPORT RESULTS  *************************************************
-
-fprintf(1,'\n*****  EXAMINE OUTPUT \n\n')
-
-% report final data fit and EM compositions
-if exist('Ft','var')  % if true EM known
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-else
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1;
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; 
-end
-
-if strcmp(vstype,'img')
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; 
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ic},{},['Map of ',num2str(DGN.c),' clusters;'],DGN,VNAMES,'img');  DGN.fn = DGN.fn+1;
-end
+if clu
+    % select data representation for clustering analysis
+    dft = 'PC';
+    cdt = input(['->  Select data representation to run clustering analysis on: \n' ...
+        '    data in principal component space: PC (dft) \n' ...
+        '    data in internal end-member space: iEM \n' ...
+        '    data in external end-member space: eEM \n'],'s');
+    if isempty(cdt); cdt = dft; end
+    DGN.cluster_data = cdt;
     
+    switch cdt
+        case 'PC'
+            Ac = Ap;
+            [Ic,Fcc,DGN] = clustering(Ac,DGN);
+            Fc = Fcc*DGN.PC(1:DGN.p-1,:) + DGN.meanX;
+        case 'IM'
+            if iem
+                Ac = Ai;
+                [Ic,Fcc,DGN] = clustering(Ac,DGN);
+                Fc = Fcc*Fi;
+            else
+                disp('no internal EM available')
+            end
+        case 'EM'
+            if eem
+                Ac = Ae;
+                [Ic,Fcc,DGN] = clustering(Ac,DGN);
+                Fc = Fcc*Fe;
+            else
+                disp('no internal EM available')
+            end
+    end
+    
+    % prepare cluster visualisation according to membership
+    DATA = cell(1,DGN.c+1);
+    LGND = cell(1,DGN.c+1);
+    for c = 1:DGN.c
+        DATA(c) = {Ac(DGN.Ii(Ic==c),:)};
+        LGND(c) = {['cluster ',int2str(c)]};
+    end
+    DATA(end) = {Fcc};
+    LGND(end) = {'cluster centroids'};
+    CCNAMES   = cell(1,DGN.p); for i=1:DGN.p; CCNAMES(i) = {['CC ',int2str(i)]}; end % create labels for principal components
+    
+    DGN.fh(DGN.fn) = visualise(DGN.fn,DATA,LGND,['Fitted data with ',num2str(DGN.c),' cluster centroids;'],DGN,CCNAMES); DGN.fn = DGN.fn+1;
+    if strcmp(vstype,'img')
+        DGN.fh(DGN.fn) = visualise(DGN.fn,{Ic},{},['Map of ',num2str(DGN.c),' clusters;'],DGN,VNAMES,'img');  DGN.fn = DGN.fn+1;
+    end
+end
+
+
+%% *****  REPORT TRAINED MODEL  *******************************************
+
+fprintf(1,'\n*****  REPORT TRAINED MODEL \n\n')
+
 DGN.CD = 1 - std(Xp-X).^2./std(X).^2;
-[~,i]  = sort(Fe(:,1));
-disp(' ');
-disp('==============================================================');
 disp(' ');
 fprintf(1,'                         '); 
 for nn=1:n
@@ -254,40 +289,82 @@ for nn=1:n
     for ll = 1:5-length(VNAMES{nn}); fprintf(1,' '); end
 end; fprintf(1,'\n');
 disp([    '==> DATA FIT: VAR. CD = ',num2str(DGN.CD                 ,'%1.3f   ')]);  
-disp([    '              NORM CD = ',num2str(norm(DGN.CD,2)./sqrt(n),'%1.3f   ')]);    fprintf(1,'\n');
-disp(     '==> INTERNAL EM COMPOSITIONS:');
-disp(' ');
-for nn=1:DGN.n
-    fprintf('%s  ',VNAMES{nn}); 
-    for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
-    for pp=1:DGN.p; if Fi(i(pp),nn)<10; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fi(i(pp),nn)); end
-    fprintf(1,'\n'); 
+disp([    '              NORM CD = ',num2str(norm(DGN.CD,2)./sqrt(n),'%1.3f   ')]);
+if iem
+    disp(' ');
+    disp(     '==> INTERNAL EM COMPOSITIONS:');
+    disp(' ');
+    for nn=1:DGN.n
+        fprintf('%s  ',VNAMES{nn});
+        for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
+        for pp=1:DGN.p; if Fi(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fi(pp,nn)); end
+        fprintf(1,'\n');
+    end
 end
-disp(' ');
-disp(     '==> EXTERNAL EM COMPOSITIONS:');
-disp(' ');
-for nn=1:DGN.n
-    fprintf('%s  ',VNAMES{nn}); 
-    for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
-    for pp=1:DGN.p; if Fe(i(pp),nn)<10; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fe(i(pp),nn)); end
-    fprintf(1,'\n'); 
+if eem
+    disp(' ');
+    disp(     '==> EXTERNAL EM COMPOSITIONS:');
+    disp(' ');
+    for nn=1:DGN.n
+        fprintf('%s  ',VNAMES{nn});
+        for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
+        for pp=1:DGN.p; if Fe(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fe(pp,nn)); end
+        fprintf(1,'\n');
+    end
+end
+if clu
+    disp(' ');
+    disp(     '==> CLUSTER CTR COMPOSITIONS:');
+    disp(' ');
+    for nn=1:DGN.n
+        fprintf('%s  ',VNAMES{nn});
+        for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
+        for cc=1:DGN.c; if Fc(cc,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fc(cc,nn)); end
+        fprintf(1,'\n');
+    end
 end
 disp(' ');
 
-% select data representation for clustering analysis
+
+%% *****  APPLY TRAINED MODEL  ********************************************
+
+fprintf(1,'\n*****  APPLY TRAINED MODEL \n\n')
+
+dft = 0;
+app = input('\n->  Do you wish to apply trained model to other data? yes=1, no=0 (dft) \n');
+if isempty(app); app = dft; end
+
+if app;  apply;  end
+
+
+%% *****  SAVE RESULTS  ***************************************************
+
+fprintf(1,'\n*****  SAVE RESULTS \n\n')
+
+% save output and figures
 dft = 0;
 sdf = input('\n->  Do you wish to save data and figures? yes=1, no=0 (dft) \n');
 if isempty(sdf); sdf = dft; end
 
 if sdf
-    sdfpath = ['./out/',PRJCT,'_',datestr(datetime('now')),'/'];
+    nowstr  = datestr(datetime('now')); nowstr(nowstr==' ') = '_';  nowstr(nowstr=='-') = []; nowstr(nowstr==':') = [];
+    sdfpath = ['./out/',PRJCT,'_',nowstr,'/'];
     if ~exist(sdfpath,'dir'); mkdir(sdfpath); end
-    save([sdfpath,'out'],'DGN','X','Xp','Ap','Fi','Fip','Ai','Fe','Fep','Ae','Fc','Ic');
+    save([sdfpath,'out']);
     for fn = 1:length(DGN.fh)
         if ishandle(DGN.fh(fn))
             set(DGN.fh(fn),'PaperSize',[24 18]);
             print(DGN.fh(fn),[sdfpath,'fig_',int2str(fn)],'-dpdf','-r300','-loose');
             savefig(DGN.fh(fn),[sdfpath,'fig_',int2str(fn)]);
+        end
+    end
+    if exist('DGNa','var')
+        for fn = 1:length(DGNa.fh)
+            if ishandle(DGNa.fh(fn))
+                set(DGNa.fh(fn),'PaperSize',[24 18]);
+                print(DGNa.fh(fn),[sdfpath,'fig_',int2str(fn)],'-dpdf','-r300','-loose');
+                savefig(DGNa.fh(fn),[sdfpath,'fig_',int2str(fn)]);
+            end
         end
     end
 end

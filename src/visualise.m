@@ -46,7 +46,7 @@ if strcmp(vstype,'rgb')  % 2D RGB image
         for j = 1:jj
             subplot(ii,jj,pp); box on;
             RGB = DATA{1}(:,rgb(pp,:));
-            RGB = (RGB - (mean(RGB)-3*std(RGB))) ./ ((mean(RGB)+3*std(RGB)) - (mean(RGB)-3*std(RGB)));
+            RGB = (RGB - (mean(RGB)-2.5*std(RGB))) ./ ((mean(RGB)+2.5*std(RGB)) - (mean(RGB)-2.5*std(RGB)));
             imagesc(reshape(RGB,DGN.mx,DGN.my,[])); axis equal tight; hold on;
             title(['RGB: ',int2str(rgb(pp,:))]);
             pp = pp+1;

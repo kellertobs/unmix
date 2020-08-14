@@ -24,10 +24,10 @@
 % license  : GNU General Public License v3.0
 
 
-function  [Xp,Ap,DGN] = reduce(X,DGN,VNAMES)
+function  [Xp,Fp,Ap,DGN] = reduce(X,DGN,VNAMES)
 
 % set tolerances for EM selections
-dft = [0.7,3.0];
+dft = [0.75,3.0];
 tol = input(['->  Adjust endmember selection tolerances as list [CStol,ORtol] \n' ...
              '    CStol: tolerance for selection coefficients (dft = ',num2str(dft(1)),') \n' ...
              '    ORtol: tolerance for outlier data removal   (dft = ',num2str(dft(2)),') \n' ]);
@@ -39,12 +39,13 @@ ORtol  = tol(2);
 p      = find(    DGN.CS > CStol,1) + 1;
 DGN.p  = p;
 
-% do varimax rotation and initial outlier removal for chosen EMs
+% truncate to p-1 principal components and initial outlier removal
 repeat = 1;
 while repeat
-    % truncate transformed EM comp 'Fpp', mix prop 'App', scaled data array 'Q'
+    % truncate to p-1 principal components
+    Fp = DGN.PC(1:DGN.p-1,:);
     Ap = DGN.PA(:,1:DGN.p-1);
-    Xp = Ap*DGN.PC(1:DGN.p-1,:) + mean(X);
+    Xp = Ap*Fp + mean(X);
 
     % remove outlier points with bad fit to p-EM model
     ir         = find(any(abs(Xp-X)./std(Xp) > ORtol,2));
