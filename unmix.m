@@ -241,7 +241,7 @@ if clu
             Ac = Ap;
             [Ic,Fcc,DGN] = clustering(Ac,DGN);
             Fc = Fcc*DGN.PC(1:DGN.p-1,:) + DGN.meanX;
-        case 'IM'
+        case 'iEM'
             if iem
                 Ac = Ai;
                 [Ic,Fcc,DGN] = clustering(Ac,DGN);
@@ -249,13 +249,13 @@ if clu
             else
                 disp('no internal EM available')
             end
-        case 'EM'
+        case 'eEM'
             if eem
                 Ac = Ae;
                 [Ic,Fcc,DGN] = clustering(Ac,DGN);
                 Fc = Fcc*Fe;
             else
-                disp('no internal EM available')
+                disp('no external EM available')
             end
     end
     
