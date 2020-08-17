@@ -75,6 +75,7 @@ Xa = Xa./sum(Xa,2);
 
 % predict PC coordinates by least-squares
 Aap = (Xa - DGN.meanX)/DGN.PC(1:DGN.p-1,:);
+Xap = Aap*DGN.PC(1:DGN.p-1,:) + DGN.meanX;
 
 % predict EM abundances by least-squares
 if iem;  Aai = Xa/Fi;  end
@@ -84,7 +85,7 @@ if eem;  Aae = Xa/Fe;  end
 [~,Ic] = pdist2(Fc,Xa,'euclidean','Smallest',1);  Ic = Ic.';
 
 if strcmp(vstype,'img')
-            DGNa.fh(DGN.fn)  = visualise(DGNa.fn,{Aap},{},'Reduced Data',DGNa,VNAMES,'rgb'); DGNa.fn = DGNa.fn+1;
+            DGNa.fh(DGN.fn)  = visualise(DGNa.fn,{Xap},{},'Reduced Data',DGNa,VNAMES,'rgb'); DGNa.fn = DGNa.fn+1;
     if iem; DGNa.fh(DGNa.fn) = visualise(DGNa.fn,{Aai},{},['Map of ',num2str(DGNa.p),' internal EM proportions;'],DGNa,VNAMES,'rgb');  DGNa.fn = DGNa.fn+1; end
     if eem; DGNa.fh(DGNa.fn) = visualise(DGNa.fn,{Aae},{},['Map of ',num2str(DGNa.p),' external EM proportions;'],DGNa,VNAMES,'rgb');  DGNa.fn = DGNa.fn+1; end
     if clu; DGNa.fh(DGNa.fn) = visualise(DGNa.fn,{Ic} ,{},['Map of ',num2str(DGNa.c),' clusters;'],DGNa,VNAMES,'img');  DGNa.fn = DGNa.fn+1; end
