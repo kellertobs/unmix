@@ -33,6 +33,9 @@ elseif strcmp(mdl(end-3:end),'.tif') || ...  % load image data from tiff file
         crs = input(['\nImage has dimensions of ',int2str(size(IMG,1)),' x ',int2str(size(IMG,2)),' x ' ,int2str(size(IMG,3)),'; apply coarsening factor (coarsen>1, dft=1):\n']);
         if isempty(crs); crs = dft; end
         IMG = IMG(1:crs:end,1:crs:end,:);
+        for i = 1:length(size(IMG,3))
+           IMG(:,:,i) = imnlmfilt(IMG(:,:,i));
+        end
     end
     [mx,my,n] = size(IMG);
     m   = mx*my;
