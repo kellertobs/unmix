@@ -22,7 +22,7 @@
 
 function  [X,DGN] = analyse(X,DGN)
 
-X  =  X./sum(X,2);  % normalise data to unit sum
+X  =  X./(sum(X,2)+1e-32);  % normalise data to unit sum
 
 % store variable-wise descriptive statistics for sum-normalised data
 DGN.minX  = min(X);
