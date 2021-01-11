@@ -117,12 +117,31 @@ elseif strcmp(file(end-3:end),'.tif') || ...  % load image data from tiff file
     vstype = 'img';  % image plots
 else % assume data is provided as Matlab file
     load(file);
-    if any(sum(X,2) > 2)  % detect that chemical data is in wt %, convert to wt fraction
-        X = X./100;
-        if exist('Ft','var'); Ft = Ft./100; end
-        if exist('Xt','var'); Xt = Xt./100; end
+    if exist('X','var')
+        if any(sum(X,2) > 2)  % detect that chemical data is in wt %, convert to wt fraction
+            X = X./100;
+            if exist('Ft','var'); Ft = Ft./100; end
+            if exist('Xt','var'); Xt = Xt./100; end
+        end
+        vstype = 'sct';  % scatter plots
+    elseif exist('IMG','var')
+        if any(size(IMG(:)) > 1e5)  % coarsen image to avoid working with oversized data
+            dft = 1;
+            crs = input(['\nImage has dimensions of ',int2str(size(IMG,1)),' x ',int2str(size(IMG,2)),' x ' ,int2str(size(IMG,3)),'; apply coarsening factor (coarsen>1, dft=1):\n']);
+            if isempty(crs); crs = dft; end
+            IMG = IMG(1:crs:end,1:crs:end,:);
+            for i = 1:length(size(IMG,3))
+                IMG(:,:,i) = imnlmfilt(IMG(:,:,i));
+            end
+        end
+        [DGN.mx,DGN.my,n] = size(IMG);
+        m   = DGN.mx*DGN.my;
+        X   = reshape(IMG,m,size(IMG,3));
+        X   = double(X);
+        VNAMES = cell(1,n); for i=1:n; VNAMES(i) = {['BND ',int2str(i)]}; end
+        SNAMES = {};
+        vstype = 'img';  % image plots
     end
-    vstype = 'sct';  % scatter plots
 end
 if ~exist('PRJCT','var'); filesplt = split(file,'.'); PRJCT = filesplt{1}; end
 X0 = X;  % store original, unprocessed data
