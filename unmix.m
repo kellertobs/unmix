@@ -62,8 +62,8 @@
 
 
 %% *****  PREP WORKSPACE  *************************************************
-clear variables;       % clear workspace
 close all;             % close figures
+clear DGN X Xp Ap Fe Fi Fc
 warning('off','all');  % turn off warning
 addpath ./src ./data   % add paths to source code and data directories
 
@@ -81,9 +81,27 @@ file = input(['->  What dataset would you like to process? \n', ...
 if isempty(file); file = dft; end
 
 % read file to load dataset
-if strcmp(file(end-3:end),'.csv') || ...  % load data from text file
-   strcmp(file(end-3:end),'.txt') || ...
-   strcmp(file(end-3:end),'.dat')
+if exist(file,'var')
+    if isfield(DATA,'Properties')
+        PRJCT  = DATA.Properties.VariableNames(1); PRJCT = PRJCT{:};
+        VNAMES = DATA.Properties.VariableNames(2:end);
+        SNAMES = DATA{:,1};
+        X      = DATA{:,2:end};
+    else
+        PRJCT  = DATA.PRJCT;
+        VNAMES = DATA.VNAMES;
+        SNAMES = DATA.SNAMES;
+        X      = DATA.X;
+    end
+    if any(sum(X,2) > 2)  % detect that chemical data is in wt %, convert to wt fraction
+        X = X./100;
+        if exist('Ft','var'); Ft = Ft./100; end
+        if exist('Xt','var'); Ft = Ft./100; end
+    end
+    vstype = 'sct';  % scatter plots
+elseif strcmp(file(end-3:end),'.csv') || ...  % load data from text file
+       strcmp(file(end-3:end),'.txt') || ...
+       strcmp(file(end-3:end),'.dat')
     DATA   = readtable(file);
     PRJCT  = DATA.Properties.VariableNames(1    ); PRJCT = PRJCT{:};
     VNAMES = DATA.Properties.VariableNames(2:end);
@@ -201,6 +219,8 @@ if iem
     [Fi,Fip,Ai,DGN] = maximise(Ap,DGN);
     
     DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+else
+    Fi = ones(DGN.m,DGN.p)./DGN.p;
 end
 
 
