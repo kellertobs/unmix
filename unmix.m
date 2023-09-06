@@ -204,6 +204,9 @@ else
     end
 end
 
+DGN.Xp = Xp;
+DGN.Ap = Ap;
+DGN.Fp = Fp;
 
 %% *****  MAXIMISE INTERNAL SIMPLEX  **************************************
 
@@ -223,6 +226,7 @@ else
     Fi = ones(DGN.m,DGN.p)./DGN.p;
 end
 
+DGN.Fi = Fi;
 
 %% *****  MINIMISE EXTERNAL SIMPLEX  **************************************
 
@@ -240,6 +244,7 @@ if eem
     DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
 end
 
+DGN.Fe = Fe;
 
 %% *****  EXAMINE RESULTS  ************************************************
 

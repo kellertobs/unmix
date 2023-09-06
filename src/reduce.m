@@ -27,7 +27,7 @@
 function  [Xp,Fp,Ap,DGN] = reduce(X,DGN,VNAMES)
 
 % set tolerances for EM selections
-dft = [0.75,100.0];
+dft = [0.9,1.0];
 tol = input(['->  Adjust endmember selection tolerances as list [CStol,ORtol] \n' ...
              '    CStol: tolerance for selection coefficients (dft = ',num2str(dft(1)),') \n' ...
              '    ORtol: tolerance for outlier data removal   (dft = ',num2str(dft(2)),') \n' ]);
@@ -65,22 +65,17 @@ while repeat
     DGN.fh(DGN.fn) = figure(DGN.fn); clf;  DGN.fn = DGN.fn+1; 
     FS = {'FontSize',14}; MS = {'MarkerSize',8}; LW = {'LineWidth',1.5};
     sgtitle(['Selected ',int2str(p),' endmembers for mixing model'],FS{:})
-    subplot(1,4,1)
-    plot(2:DGN.n,DGN.CC,'k-',2:DGN.n,DGN.CC,'ko',MS{:},LW{:}); hold on; box on; axis tight;
-    plot(p,DGN.CC(p-1),'ro',MS{:},LW{:});
-    set(gca,LW{:});
-    title('k-means clustering',FS{:});
-    subplot(1,4,2)
+    subplot(1,3,1)
     plot(2:DGN.n,DGN.CV,'k-',2:DGN.n,DGN.CV,'ko',MS{:},LW{:}); hold on; box on; axis tight;
     plot(p,DGN.CV(p-1),'ro',MS{:},LW{:});
     set(gca,LW{:});
     title('data variance',FS{:})
-    subplot(1,4,3)
+    subplot(1,3,2)
     plot(2:DGN.n,mean(DGN.CD),'k-',2:DGN.n,mean(DGN.CD),'ko',MS{:},LW{:}); hold on; box on; axis tight;
     plot(p,mean(DGN.CD(:,p-1)),'ro',MS{:},LW{:});
     set(gca,LW{:});
     title('data fit',FS{:})
-    subplot(1,4,4)
+    subplot(1,3,3)
     plot([2,DGN.n],[CStol,CStol],'b-',MS{:},LW{:}); hold on; box on; axis tight;
     plot(2:DGN.n,DGN.CS,'k-',2:DGN.n,DGN.CS,'ko',MS{:},LW{:});
     plot(p,DGN.CS(p-1),'ro',MS{:},LW{:});
@@ -94,7 +89,7 @@ while repeat
     
     if  prcd>1;  p = prcd;   end
     if  prcd==1; repeat = 0; end
-    DGN.p = p;
+    DGN.p  = p;
 end  % end while
 
 end  % end function

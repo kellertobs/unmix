@@ -27,7 +27,7 @@ function [F,Fp,A,DGN] = minimise(A,F,DGN)
 p = DGN.p;  % #end-members
 
 % set tolerances for EM selections
-dft = [0.01,0.01];
+dft = [0.0,0.0];
 tol = input(['->  Adjust endmember fitting tolerances as list [Atol,Ftol] \n' ...
              '    Atol: tolerance for negative abundances    (dft = ',num2str(dft(1)),') \n' ...
              '    Ftol: tolerance for negative EM components (dft = ',num2str(dft(2)),') \n']);
