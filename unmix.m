@@ -62,8 +62,8 @@
 
 
 %% *****  PREP WORKSPACE  *************************************************
-close all;             % close figures
-clear DGN X Xp Ap Fe Fi Fc
+% close all;             % close figures
+clear DGN X Xp Ap FExt FInt FCls opts
 warning('off','all');  % turn off warning
 addpath ./src ./data   % add paths to source code and data directories
 
@@ -213,38 +213,35 @@ DGN.Fp = Fp;
 fprintf(1,'\n*****  FIND INTERNAL END-MEMBERS \n\n')
 
 dft = 0;
-iem = input('\n->  Do you wish to find internal end-members? yes=1, no=0 (dft) \n');
-if isempty(iem); iem = dft; end
+em = input('\n->  Do you wish to find internal and external end-members? yes=1, no=0 (dft) \n');
+if isempty(em); em = dft; end
 
-if iem
+if em
     % find internal EMs that span maximum inclusive volume in RPC space
     % based on VCA algorithm by [REF]
-    [Fi,Fip,Ai,DGN] = maximise(Ap,DGN);
+    [FInt,FIntp,AInt,DGN] = maximise(Ap,DGN);
     
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fip},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),FIntp},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' internal EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+    DGN.FInt = FInt;
 else
-    Fi = ones(DGN.m,DGN.p)./DGN.p;
+    FInt = ones(DGN.m,DGN.p)./DGN.p;
 end
 
-DGN.Fi = Fi;
+
 
 %% *****  MINIMISE EXTERNAL SIMPLEX  **************************************
 
 fprintf(1,'\n*****  FIND EXTERNAL END-MEMBERS \n\n')
 
-dft = 0;
-eem = input('\n->  Do you wish to find external end-members? yes=1, no=0 (dft) \n');
-if isempty(eem); eem = dft; end
-
-if eem
+if em
     % find external EMs that span minimum exclusive volume in RPC space
     % based on the MINVEST algorithm by [REF]
-    [Fe,Fep,Ae,DGN] = minimise(Ap,Fi,DGN);
+    [FExt,FExtp,AExt,DGN] = minimise(Ap,FInt,DGN);
     
-    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),Fep},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+    DGN.fh(DGN.fn) = visualise(DGN.fn,{Ap(DGN.Ii,:),FExtp},{'proj. data','initial EMs'},['Fitted data with ',num2str(DGN.p),' external EMs;'],DGN,PCNAMES); DGN.fn = DGN.fn+1;
+    DGN.FExt = FExt;
 end
 
-DGN.Fe = Fe;
 
 %% *****  EXAMINE RESULTS  ************************************************
 
@@ -252,16 +249,16 @@ fprintf(1,'\n*****  EXAMINE OUTPUT \n\n')
 
 % report final data fit and EM compositions
 if exist('Ft','var')  % if true EM known
-    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
-    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,FInt,Ft},{'orig. data','proj. data','internal EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,FExt,Ft},{'orig. data','proj. data','external EMs','true EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
 else
-    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fi},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
-    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,Fe},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,FInt},{'orig. data','proj. data','internal EMs'},['Fitted model with ',num2str(DGN.p),' internal EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{X,Xp,FExt},{'orig. data','proj. data','external EMs'},['Fitted model with ',num2str(DGN.p),' external EMs;'],DGN,VNAMES);  DGN.fn = DGN.fn+1; end
 end
 
 if strcmp(vstype,'img')
-    if iem; DGN.fh(DGN.fn) = visualise(DGN.fn,{Ai},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
-    if eem; DGN.fh(DGN.fn) = visualise(DGN.fn,{Ae},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{AInt},{},['Map of ',num2str(DGN.p),' internal EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
+    if em; DGN.fh(DGN.fn) = visualise(DGN.fn,{AExt},{},['Map of ',num2str(DGN.p),' external EM proportions;'],DGN,VNAMES,'rgb');  DGN.fn = DGN.fn+1; end
 end
 
 
@@ -287,20 +284,20 @@ if clu
         case 'PC'
             Ac = Ap;
             [Ic,Fcc,DGN] = clustering(Ac,DGN);
-            Fc = Fcc*DGN.PC(1:DGN.p-1,:) + DGN.meanX;
+            FCls = Fcc*DGN.PC(1:DGN.p-1,:) + DGN.meanX;
         case 'iEM'
-            if iem
-                Ac = Ai;
+            if em
+                Ac = AInt;
                 [Ic,Fcc,DGN] = clustering(Ac,DGN);
-                Fc = Fcc*Fi;
+                FCls = Fcc*FInt;
             else
                 disp('no internal EM available')
             end
         case 'eEM'
-            if eem
-                Ac = Ae;
+            if em
+                Ac = AExt;
                 [Ic,Fcc,DGN] = clustering(Ac,DGN);
-                Fc = Fcc*Fe;
+                FCls = Fcc*FExt;
             else
                 disp('no external EM available')
             end
@@ -337,25 +334,25 @@ for nn=1:n
 end; fprintf(1,'\n');
 disp([    '==> DATA FIT: VAR. CD = ',num2str(DGN.CD                 ,'%1.3f   ')]);  
 disp([    '              NORM CD = ',num2str(norm(DGN.CD,2)./sqrt(n),'%1.3f   ')]);
-if iem
+if em
     disp(' ');
     disp(     '==> INTERNAL EM COMPOSITIONS:');
     disp(' ');
     for nn=1:DGN.n
         fprintf('%s  ',VNAMES{nn});
         for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
-        for pp=1:DGN.p; if Fi(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fi(pp,nn)); end
+        for pp=1:DGN.p; if FInt(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',FInt(pp,nn)); end
         fprintf(1,'\n');
     end
 end
-if eem
+if em
     disp(' ');
     disp(     '==> EXTERNAL EM COMPOSITIONS:');
     disp(' ');
     for nn=1:DGN.n
         fprintf('%s  ',VNAMES{nn});
         for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
-        for pp=1:DGN.p; if Fe(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fe(pp,nn)); end
+        for pp=1:DGN.p; if FExt(pp,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',FExt(pp,nn)); end
         fprintf(1,'\n');
     end
 end
@@ -366,7 +363,7 @@ if clu
     for nn=1:DGN.n
         fprintf('%s  ',VNAMES{nn});
         for ll = 1:8-length(VNAMES{nn}); fprintf(1,' '); end
-        for cc=1:DGN.c; if Fc(cc,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',Fc(cc,nn)); end
+        for cc=1:DGN.c; if FCls(cc,nn)>0; fprintf(1,' '); end; fprintf(1,'%2.3f  ',FCls(cc,nn)); end
         fprintf(1,'\n');
     end
 end

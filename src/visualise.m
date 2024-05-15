@@ -35,8 +35,8 @@ if strcmp(vstype,'rgb')  % 2D RGB image
     rgb = input('\nHow would you like to assign bands to RGB channels? (default [1,2,3]):\n');
     if isempty(rgb); rgb = dft; end
     nn = size(rgb,1);
-    ii = ceil(sqrt(nn));
-    jj = ceil((nn)/ii);
+    jj = ceil(sqrt(nn));
+    ii = ceil((nn)/jj);
     pp = 1;
     if size(DATA{1},1) < DGN.mx*DGN.my
         DATA{1}(DGN.Ii,pp) = DATA{1}(:,pp);
@@ -55,24 +55,36 @@ if strcmp(vstype,'rgb')  % 2D RGB image
     end
     
 else
-    kk = length(DATA);
-    nn = size(DATA{1},2);
-    ii = ceil(sqrt(nn));
-    jj = ceil((nn)/ii);
-    pp = 1;
-    for i = 1:ii
-        for j = 1:jj
-            subplot(ii,jj,pp); box on;
-            if strcmp(vstype,'img')  % 2D image
+    if strcmp(vstype,'img')  % 2D image
+        kk = length(DATA);
+        nn = size(DATA{1},2);
+        jj = ceil(sqrt(nn));
+        ii = ceil((nn)/jj);
+        pp = 1;
+        for i = 1:ii
+            for j = 1:jj
+                subplot(ii,jj,pp); box on;
                 if size(DATA{1},1) < DGN.mx*DGN.my
                     DATA{1}(DGN.Ii,pp) = DATA{1}(:,pp);
                     DATA{1}(DGN.Ir,pp) = nan;
                 end
                 imagesc(reshape(DATA{1}(:,pp),DGN.mx,DGN.my,[])); axis equal tight; colormap(ocean); colorbar; hold on;
                 title(VNAME{pp},FS{:});
-            else  % scatter plot
+                pp = pp+1;
+                if (pp>nn); break; end
+            end
+        end
+    else  % scatter plot
+        kk = length(DATA);
+        nn = size(DATA{1},2);
+        jj = ceil(sqrt(nn-1));
+        ii = ceil((nn-1)/jj);
+        pp = 2;
+        for i = 1:ii
+            for j = 1:jj
+                subplot(ii,jj,pp-1); box on;
                 for k = 1:kk
-                    if     size(DATA{k},1) == DGN.m % is data array
+                    if  size(DATA{k},1) == DGN.m % is data array
                         plot(DATA{k}(DGN.Ii,1),DATA{k}(DGN.Ii,pp),MT{1},MS{:},CL{1},CL{1+k},LW{:}); hold on;
                         plot(DATA{k}(DGN.Ir,1),DATA{k}(DGN.Ir,pp),MT{2},MS{:},CL{1},CL{1+k},LW{:});
                         if ~isempty(DGN.Ir) && all(~isnan(DATA{k}(:))); LEGEND = {LEGEND{1:2*k-1},[LEGEND{2*k-1},' rmvd'],LEGEND{2*k:end}}; end
@@ -85,9 +97,9 @@ else
                 if pp==1; legend(LEGEND{:},FS{:},LW{:},'Location','northoutside','box','on'); end
                 xlabel(VNAME{1},FS{:}); ylabel(VNAME{pp},FS{:});
                 set(gca,LW{:});
+                pp = pp+1;
+                if (pp>nn); break; end
             end
-            pp = pp+1;
-            if (pp>nn); break; end
         end
     end
 end
