@@ -42,10 +42,16 @@ DGN.p  = p;
 % truncate to p-1 principal components and initial outlier removal
 repeat = 1;
 while repeat
-    % truncate to p-1 principal components
-    Fp = DGN.PC(1:DGN.p-1,:);
-    Ap = DGN.PA(:,1:DGN.p-1);
-    Xp = Ap*Fp + mean(X);
+    if p==1
+        Fp = zeros(size(X(1,:)));
+        Ap = ones(size(X(:,1)));
+        Xp = Ap*Fp + mean(X);
+    else
+        % truncate to p-1 principal components
+        Fp = DGN.PC(1:DGN.p-1,:);
+        Ap = DGN.PA(:,1:DGN.p-1);
+        Xp = Ap*Fp + mean(X);
+    end
 
     % remove outlier points with bad fit to p-EM model
     ir         = find(any(abs(Xp-X)./std(Xp) > ORtol,2));
@@ -62,6 +68,7 @@ while repeat
     DGN.fh(DGN.fn) = visualise(DGN.fn,{(Xp-X)./std(Xp)},{'proj. residuals'},['Data projection residuals for ',num2str(DGN.p),' EMs'],DGN,VNAMES); DGN.fn = DGN.fn+1; 
 
     % plot dimensionality selection metrics
+    if p>1
     DGN.fh(DGN.fn) = figure(DGN.fn); clf;  DGN.fn = DGN.fn+1; 
     FS = {'FontSize',14}; MS = {'MarkerSize',8}; LW = {'LineWidth',1.5};
     sgtitle(['Selected ',int2str(p),' endmembers for mixing model'],FS{:})
@@ -81,14 +88,15 @@ while repeat
     plot(p,DGN.CS(p-1),'ro',MS{:},LW{:});
     set(gca,LW{:});
     title('selection',FS{:})
+    end
     
     % decide to procede with selected model or change selection
-    dft  = 1;
-    prcd = input(['\n->  Proceed with ',num2str(p),'-EM model (1, dft) or adjust number of EM (>1)? \n']);
+    dft  = -1;
+    prcd = input(['\n->  Proceed with ',num2str(p),'-EM model (-1, dft) or adjust number of EM (>1)? \n']);
     if isempty(prcd); prcd = dft; end
     
-    if  prcd>1;  p = prcd;   end
-    if  prcd==1; repeat = 0; end
+    if  prcd>0;  p = prcd;   end
+    if  prcd<0; repeat = 0; end
     DGN.p  = p;
 end  % end while
 
